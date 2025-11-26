@@ -1,6 +1,7 @@
 """SVG icon generation API routes."""
 
 from fastapi import APIRouter, HTTPException, status, Header
+from fastapi.responses import Response
 from app.models.icon import IconGenerationRequest, IconGenerationResponse
 import logging
 from typing import Optional
@@ -71,6 +72,60 @@ async def generate(
 
         logger.error(
             f"SVG generation failed: {error_type}: {error_message}", exc_info=True
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": error_type, "message": error_message},
+        )
+
+
+@router.post(
+    "/generate/raw",
+    status_code=status.HTTP_200_OK,
+    summary="Generate SVG icon and return raw SVG",
+    description="""
+    Generates a custom SVG icon and returns the raw SVG code as plain text.
+
+    This endpoint returns only the SVG code without JSON wrapping,
+    suitable for direct use in HTML or other contexts.
+    """,
+)
+async def generate_raw(
+    request: IconGenerationRequest,
+    x_api_key: Optional[str] = Header(None),
+) -> Response:
+    """Generate SVG icon and return raw SVG code."""
+    try:
+        logger.info(
+            f"Generating raw SVG: {request.prompt} ({request.provider}/{request.model})"
+        )
+
+        if not x_api_key:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="API key required. Pass it in X-API-Key header.",
+            )
+
+        svg_code, provider_used, model_used = svg_generator.generate_icon(
+            description=request.prompt,
+            provider=request.provider,
+            model=request.model,
+            api_key=x_api_key,
+        )
+
+        logger.info(f"Raw SVG generated successfully: {provider_used}/{model_used}")
+
+        return Response(content=svg_code, media_type="image/svg+xml")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        error_type = type(e).__name__
+        error_message = str(e)
+
+        logger.error(
+            f"Raw SVG generation failed: {error_type}: {error_message}", exc_info=True
         )
 
         raise HTTPException(
