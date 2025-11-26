@@ -141,10 +141,6 @@ class SVGGenerator:
 
     def _clean_svg(self, svg_code: str) -> str:
         """Clean and normalize SVG code."""
-        svg_code = svg_code.replace('\\"', '"')
-        svg_code = svg_code.replace("\\'", "'")
-        svg_code = svg_code.replace("\\n", "")
-        svg_code = svg_code.replace("\\t", "")
         svg_code = re.sub(r"\s+", " ", svg_code)
         svg_code = re.sub(r">\s+<", "><", svg_code)
         return svg_code.strip()
