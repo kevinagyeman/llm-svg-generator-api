@@ -1,23 +1,22 @@
-"""
-SVG Icon Generation data models using Pydantic.
-"""
+"""SVG icon generation data models."""
 
-from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, Field, field_validator
+from typing import Literal
+from pydantic import BaseModel, Field
 
 
 class IconGenerationRequest(BaseModel):
-    """Input model for SVG icon generation requests."""
+    """SVG icon generation request."""
 
-    prompt: str = Field(
-        ...,
-        description="Description of the icon to generate",
-        examples=["a simple rocket ship"],
+    prompt: str = Field(..., description="Icon description", examples=["a rocket ship"])
+    provider: Literal["openai", "gemini", "anthropic", "ollama"] = Field(
+        ..., description="LLM provider", examples=["openai"]
     )
+    model: str = Field(..., description="Model name", examples=["gpt-4"])
 
 
 class IconGenerationResponse(BaseModel):
-    """Output model for SVG icon generation results."""
+    """SVG icon generation response."""
 
     icon: str = Field(..., description="Generated SVG code")
+    provider: str = Field(..., description="Provider used")
+    model: str = Field(..., description="Model used")

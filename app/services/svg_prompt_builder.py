@@ -14,16 +14,27 @@ class SVGPromptBuilder:
 Generate a simple, clean SVG icon based on this description:
 "{description}"
 
-REQUIREMENTS:
-- Output ONLY valid SVG code, nothing else
+CRITICAL REQUIREMENTS:
+- Output ONLY valid, well-formed SVG XML code
+- ALL attribute values MUST be in double quotes (e.g., width="24" not width=24)
 - Use viewBox="0 0 24 24" for consistency
+- Include xmlns="http://www.w3.org/2000/svg" in the svg tag
 - Keep the design minimal and clear
-- Use solid colors (preferably black or single color)
+- Use solid colors (preferably black: fill="black" or stroke="black")
 - No gradients or complex effects
 - Center the icon within the viewBox
+- Self-close empty tags (e.g., <path .../> not <path ...></path>)
 
-IMPORTANT: Respond with ONLY the SVG code. Start with <svg and end with </svg>. No explanations, no markdown, no code blocks.
+STRICT FORMAT:
+- Start IMMEDIATELY with <svg
+- End with </svg>
+- NO explanations before or after
+- NO markdown code blocks
+- NO text outside the SVG tags
 
-SVG:"""
+Example valid format:
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="black"/></svg>
+
+Now generate the SVG for: {description}"""
 
         return prompt

@@ -1,19 +1,14 @@
-"""
-API route handlers for SVG icon generation endpoints.
-"""
+"""SVG icon generation API routes."""
 
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status, Header
 from app.models.icon import IconGenerationRequest, IconGenerationResponse
-from datetime import datetime
 import logging
+from typing import Optional
 from app.services.svg_generator import svg_generator
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(
-    prefix="/api/v1",
-    tags=["svg-generation"],
-)
+router = APIRouter(prefix="/api/v1", tags=["svg-generation"])
 
 
 @router.post(
@@ -39,41 +34,46 @@ router = APIRouter(
 )
 async def generate(
     request: IconGenerationRequest,
+    x_api_key: Optional[str] = Header(None),
 ) -> IconGenerationResponse:
-    """
-    Generate an SVG icon from a text description.
-
-    The LLM will create a simple, clean SVG icon matching your description.
-    Icons are generated with viewBox="0 0 24 24" for consistency.
-
-    Args:
-        request: Icon generation request containing the prompt
-
-    Returns:
-        IconGenerationResponse with the generated SVG code
-
-    Raises:
-        HTTPException: If there's an error processing the request
-    """
+    """Generate SVG icon from text description using specified LLM provider."""
     try:
-        logger.info(f"Generating SVG icon for prompt: {request.prompt}")
+        logger.info(
+            f"Generating SVG: {request.prompt} ({request.provider}/{request.model})"
+        )
 
-        # Generate SVG icon using the service
-        svg_code = svg_generator.generate_icon(request.prompt)
+        if not x_api_key:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="API key required. Pass it in X-API-Key header.",
+            )
 
-        response = IconGenerationResponse(icon=svg_code)
+        svg_code, provider_used, model_used = svg_generator.generate_icon(
+            description=request.prompt,
+            provider=request.provider,
+            model=request.model,
+            api_key=x_api_key,
+        )
 
-        logger.info(f"SVG icon generated successfully")
+        logger.info(f"SVG generated successfully: {provider_used}/{model_used}")
 
-        return response
+        return IconGenerationResponse(
+            icon=svg_code,
+            provider=provider_used,
+            model=model_used,
+        )
 
+    except HTTPException:
+        raise
     except Exception as e:
+        error_type = type(e).__name__
+        error_message = str(e)
+
         logger.error(
-            f"Error generating SVG icon: {str(e)}",
-            exc_info=True,
+            f"SVG generation failed: {error_type}: {error_message}", exc_info=True
         )
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while generating the SVG icon: {str(e)}",
+            detail={"error": error_type, "message": error_message},
         )
