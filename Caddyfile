@@ -1,0 +1,9 @@
+iconvect-playground.kevinagyeman.com {
+    reverse_proxy api:8001
+
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        X-XSS-Protection "1; mode=block"
+    }
+}
