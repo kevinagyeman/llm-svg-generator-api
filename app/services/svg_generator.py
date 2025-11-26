@@ -141,11 +141,13 @@ class SVGGenerator:
 
     def _clean_svg(self, svg_code: str) -> str:
         """Clean and normalize SVG code."""
-        # Remove extra whitespace
+        svg_code = svg_code.replace('\\"', '"')
+        svg_code = svg_code.replace("\\'", "'")
+        svg_code = svg_code.replace("\\n", "")
+        svg_code = svg_code.replace("\\t", "")
         svg_code = re.sub(r"\s+", " ", svg_code)
-        # Ensure proper spacing around tags
         svg_code = re.sub(r">\s+<", "><", svg_code)
-        return svg_code
+        return svg_code.strip()
 
     def _validate_svg(self, svg_code: str) -> bool:
         """Validate that SVG code is well-formed XML."""
